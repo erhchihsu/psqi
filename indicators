@@ -1,0 +1,42 @@
+# PSQI
+# PSQIDURAT - DURATION OF SLEEP
+aio$PSQIDURAT <- ifelse(aio$psqi_4 >= 7, 0,
+                           ifelse(aio$psqi_4 < 7 & aio$psqi_4 >= 6, 1,
+                                  ifelse(aio$psqi_4 < 6 & aio$psqi_4 >= 5, 2, 3)))
+# PSQIDISTB - SLEEP DISTURBANCE
+aio$psqi_5othera[is.na(aio$psqi_5othera) | is.na(aio$psqi_5other)] <- 0
+
+aio$PSQI_5_sum <- rowSums(aio[,c("psqi_5b", "psqi_5c", "psqi_5d", "psqi_5e", "psqi_5f", "psqi_5g", "psqi_5h", "psqi_5i", "psqi_5othera")], na.rm = F)
+
+aio$PSQIDISTB <- ifelse(aio$PSQI_5_sum == 0, 0,
+                     ifelse(aio$PSQI_5_sum >= 1 & aio$PSQI_5_sum <= 9, 1,
+                     ifelse(aio$PSQI_5_sum > 9 & aio$PSQI_5_sum <= 18, 2, 3)))
+# PSQILATEN - SLEEP LATENCY
+aio$psqi_2new <- ifelse(aio$psqi_2 >= 0 & aio$psqi_2 <= 15, 0,
+                     ifelse(aio$psqi_2 > 15 & aio$psqi_2 <= 30, 1,
+                     ifelse(aio$psqi_2 > 30 & aio$psqi_2 <= 60, 2, 3)))
+aio$PSQILATEN <- ifelse(aio$psqi_5a + aio$psqi_2new == 0, 0,
+                     ifelse(aio$psqi_5a + aio$psqi_2new >= 1 & aio$psqi_5a + aio$psqi_2new <= 2, 1,
+                     ifelse(aio$psqi_5a + aio$psqi_2new >= 3 & aio$psqi_5a + aio$psqi_2new <= 4, 2, 3)))
+# PSQIDAYDYS - DAY DYSFUNCTION DUE TO SLEEPINESS
+aio$PSQIDAYDYS <- ifelse(aio$psqi_8 + aio$psqi_9 == 0, 0,
+                      ifelse(aio$psqi_8 + aio$psqi_9 >= 1 & aio$psqi_8 + aio$psqi_9 <= 2, 1,
+                      ifelse(aio$psqi_8 + aio$psqi_9 >= 3 & aio$psqi_8 + aio$psqi_9 <= 4, 2, 3)))
+# PSQIHSE - SLEEP EFFICIENCY
+# psqi_1 and psqi_3 should be in POSIXct format
+
+aio$diffsec <- difftime(aio$psqi_3, aio$psqi_1, units = "secs")
+aio$diffhour <- abs(aio$diffsec / 3600)
+aio$newtib <- ifelse(aio$diffhour > 24, aio$diffhour - 24, aio$diffhour)
+aio$tmphse <- (aio$psqi_4 / aio$newtib) * 100
+aio$PSQIHSE <- ifelse(aio$tmphse >= 85, 0,
+                   ifelse(aio$tmphse < 85 & aio$tmphse >= 75, 1,
+                   ifelse(aio$tmphse < 75 & aio$tmphse >= 65, 2, 3)))
+# PSQISLPQUAL - OVERALL SLEEP QUALITY
+aio$PSQISLPQUAL <- aio$psqi_6
+# PSQIMEDS - NEED MEDS TO SLEEP
+aio$PSQIMEDS <- aio$psqi_7
+# PSQI TOTAL
+aio$PSQI_TOTAL <- aio$PSQIDURAT + aio$PSQIDISTB + aio$PSQILATEN + aio$PSQIDAYDYS + aio$PSQIHSE + aio$PSQISLPQUAL + aio$PSQIMEDS
+# Sleep Quality based on PSQI Total
+aio$PSQI_cat <- ifelse(aio$PSQI_TOTAL <= 5, 1, 0)
